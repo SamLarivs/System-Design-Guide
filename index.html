@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Comprehensive guide to system design interviews with visual examples, key concepts, and practical patterns for building scalable applications.">
+    <meta name="keywords" content="system design, scalability, architecture, interviews, software engineering, load balancing, caching, databases">
+    <title>The System Design Interview Guide | Learning Scalable Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #3366CC;
+            --primary-dark: #102A43;
+            --secondary-gray: #334E68;
+            --accent-orange: #FF9900;
+            --background-light: #F0F4F8;
+            --card-white: #FFFFFF;
+            --border-light: #A7BFDB;
+            --success-green: #109618;
+            --error-red: #DC3912;
+            --text-primary: #1f5180;
+            --text-secondary: #577592;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 8px 25px rgba(51, 102, 204, 0.15);
+            --shadow-heavy: 0 12px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        
+        * {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #F0F4F8 0%, #E8F4F8 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #4A90E2 100%);
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 400px;
+            }
+        }
+        
+        .flow-arrow {
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--primary-blue);
+            transition: transform 0.2s ease;
+        }
+        
+        .flow-arrow:hover {
+            transform: scale(1.1);
+        }
+        
+        .flow-box {
+            border: 2px solid var(--primary-blue);
+            background-color: #EBF8FF;
+            color: var(--primary-dark);
+            transition: all 0.3s ease;
+        }
+        
+        .flow-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(51, 102, 204, 0.15);
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-link {
+            transition: color 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-blue);
+        }
+        
+        .section-divider {
+            background: linear-gradient(90deg, transparent 0%, var(--border-light) 50%, transparent 100%);
+            height: 1px;
+            width: 100%;
+            margin: 2rem 0;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #FFF7ED 0%, #FFFBEB 100%);
+            border-left: 4px solid var(--accent-orange);
+        }
+        
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            overflow-x: auto;
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+        
+        .pattern-bg {
+            background-image: radial-gradient(circle at 25% 25%, rgba(51, 102, 204, 0.05) 2px, transparent 2px);
+            background-size: 20px 20px;
+        }
+        
+        .card {
+            background: var(--card-white) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+        }
+        
+        nav {
+            background: var(--card-white) !important;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .text-primary-custom {
+            color: var(--text-primary) !important;
+        }
+        
+        .text-secondary-custom {
+            color: var(--text-secondary) !important;
+        }
+        
+        .bg-custom {
+            background: var(--background-light) !important;
+        }
+        
+    </style>
+</head>
+<body class="antialiased pattern-bg">
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50" role="navigation" aria-label="Main navigation">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">SD</span>
+                    </div>
+                    <span class="font-bold text-lg">System Design Guide</span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#intro" class="nav-link text-sm font-medium">Introduction</a>
+                    <a href="#requirements" class="nav-link text-sm font-medium">Requirements</a>
+                    <a href="#concepts" class="nav-link text-sm font-medium">Core Concepts</a>
+                    <a href="#patterns" class="nav-link text-sm font-medium">Patterns</a>
+                    <a href="#process" class="nav-link text-sm font-medium">Interview Process</a>
+                    <a href="#examples" class="nav-link text-sm font-medium">Examples</a>
+                </div>
+                <button id="mobile-menu-btn" class="md:hidden" aria-label="Toggle mobile menu">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <div class="flex flex-col space-y-2">
+                    <a href="#intro" class="nav-link text-sm font-medium py-2">Introduction</a>
+                    <a href="#requirements" class="nav-link text-sm font-medium py-2">Requirements</a>
+                    <a href="#concepts" class="nav-link text-sm font-medium py-2">Core Concepts</a>
+                    <a href="#patterns" class="nav-link text-sm font-medium py-2">Patterns</a>
+                    <a href="#process" class="nav-link text-sm font-medium py-2">Interview Process</a>
+                    <a href="#examples" class="nav-link text-sm font-medium py-2">Examples</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <!-- Hero Section -->
+        <header id="intro" class="text-center mb-16 pt-8">
+            <div class="gradient-bg rounded-2xl p-8 md:p-12 text-white mb-8">
+                <h1 class="text-4xl md:text-6xl font-bold mb-4 leading-tight">Master System Design Interviews</h1>
+                <p class="text-xl md:text-2xl font-light mb-6 opacity-90">A comprehensive visual guide to architecting scalable, real-world applications</p>
+                <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+                    <div class="flex items-center bg-white/20 rounded-lg px-4 py-2">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="font-medium">Interview-Ready</span>
+                    </div>
+                    <div class="flex items-center bg-white/20 rounded-lg px-4 py-2">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                        </svg>
+                        <span class="font-medium">Visual Learning</span>
+                    </div>
+                    <div class="flex items-center bg-white/20 rounded-lg px-4 py-2">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                        </svg>
+                        <span class="font-medium">Real Examples</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Introduction Section -->
+            <section class="card bg-white rounded-xl shadow-lg p-6 md:p-10 mb-12 text-center" aria-labelledby="what-is-system-design">
+                <h2 id="what-is-system-design" class="text-3xl font-bold text-[#102A43] mb-6">What is System Design?</h2>
+                <p class="max-w-4xl mx-auto text-lg text-[#334E68] mb-8 leading-relaxed">System design is the blueprint for scalable software architecture. It's the art and science of defining system components, their interactions, and data flow to meet specific functional and non-functional requirements. Success requires strategic thinking, understanding trade-offs, and making informed architectural decisions.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-[#3366CC] mb-2">90%</div>
+                        <p class="text-sm text-[#334E68] font-medium">of FAANG companies use system design in senior interviews</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-[#109618] mb-2">10x</div>
+                        <p class="text-sm text-[#334E68] font-medium">performance improvement with proper caching strategies</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-[#FF9900] mb-2">99.9%</div>
+                        <p class="text-sm text-[#334E68] font-medium">uptime achieved with redundancy and failover</p>
+                    </div>
+                </div>
+                
+                <div class="section-divider"></div>
+                
+                <div class="highlight-box rounded-lg p-6 mt-8">
+                    <h3 class="text-xl font-semibold mb-3">💡 Key Insight</h3>
+                    <p class="text-base text-[#334E68]">System design interviews aren't about memorizing solutions—they're about demonstrating your ability to think through complex problems, make trade-offs, and communicate your reasoning clearly.</p>
+                </div>
+            </section>
+            
+            <!-- Requirements Section -->
+            <section id="requirements" class="card bg-white rounded-xl shadow-lg p-6 md:p-10 mb-12" aria-labelledby="defining-requirements">
+                <h2 id="defining-requirements" class="text-3xl font-bold text-[#102A43] mb-8 text-center">The Foundation: Defining Requirements</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div class="border-l-4 border-[#3366CC] pl-6">
+                        <h3 class="text-2xl font-semibold text-[#102A43] mb-4 flex items-center">
+                            <span class="text-2xl mr-2">✅</span> Functional Requirements
+                        </h3>
+                        <p class="text-base text-[#334E68] mb-4 leading-relaxed">What the system <span class="font-bold text-[#3366CC]">must do</span>. These are the user-facing features and core business logic.</p>
+                        
+                        <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                            <h4 class="font-semibold text-[#102A43] mb-2">Example: Social Media Platform</h4>
+                            <ul class="text-sm text-[#334E68] space-y-1">
+                                <li class="flex items-center"><span class="text-[#3366CC] mr-2">•</span> User registration & authentication</li>
+                                <li class="flex items-center"><span class="text-[#3366CC] mr-2">•</span> Post creation, editing, deletion</li>
+                                <li class="flex items-center"><span class="text-[#3366CC] mr-2">•</span> News feed generation</li>
+                                <li class="flex items-center"><span class="text-[#3366CC] mr-2">•</span> Following/followers system</li>
+                                <li class="flex items-center"><span class="text-[#3366CC] mr-2">•</span> Real-time notifications</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-[#FF9900] pl-6">
+                        <h3 class="text-2xl font-semibold text-[#102A43] mb-4 flex items-center">
+                            <span class="text-2xl mr-2">⚙️</span> Non-Functional Requirements
+                        </h3>
+                        <p class="text-base text-[#334E68] mb-4 leading-relaxed">How the system <span class="font-bold text-[#FF9900]">should perform</span>. These define quality attributes and system constraints.</p>
+                        
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-[#102A43] mb-2">Critical Metrics</h4>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="tooltip" data-tooltip="System stays operational">
+                                    <span class="font-medium text-[#FF9900]">Availability:</span>
+                                    <div class="text-[#334E68]">99.9% uptime</div>
+                                </div>
+                                <div class="tooltip" data-tooltip="Response time for user actions">
+                                    <span class="font-medium text-[#FF9900]">Latency:</span>
+                                    <div class="text-[#334E68]">< 200ms</div>
+                                </div>
+                                <div class="tooltip" data-tooltip="Concurrent users supported">
+                                    <span class="font-medium text-[#FF9900]">Scale:</span>
+                                    <div class="text-[#334E68]">10M+ users</div>
+                                </div>
+                                <div class="tooltip" data-tooltip="Data processing capacity">
+                                    <span class="font-medium text-[#FF9900]">Throughput:</span>
+                                    <div class="text-[#334E68]">100K req/s</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 bg-gray-50 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-[#102A43] mb-3">🎯 Pro Tips for Requirements Gathering</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-[#334E68]">
+                        <div class="flex items-start">
+                            <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                            <span>Start with core features, then add complexity</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                            <span>Ask about read/write ratios early</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                            <span>Clarify data consistency requirements</span>
+                        </div>
+                        <div class="flex items-start">
+                            <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                            <span>Understand geographic distribution needs</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Core Concepts Section -->
+            <section id="concepts" class="mb-12" aria-labelledby="core-concepts">
+                <h2 id="core-concepts" class="text-3xl font-bold text-[#102A43] mb-10 text-center">The Architect's Toolkit: Core Concepts</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
+                    <div class="card bg-white rounded-xl shadow-lg p-8 flex flex-col items-center">
+                        <h3 class="text-2xl font-semibold text-[#102A43] mb-6 text-center">Read vs. Write Patterns</h3>
+                        <div class="chart-container mb-6">
+                            <canvas id="readWriteChart"></canvas>
+                        </div>
+                        <p class="text-center text-base text-[#334E68] mb-4 leading-relaxed">Most modern applications are read-heavy. Social platforms, news sites, and e-commerce show a 100:1 read-to-write ratio. This pattern drives caching strategies and database architecture decisions.</p>
+                        <div class="w-full bg-blue-50 rounded-lg p-4 text-sm">
+                            <strong class="text-[#102A43]">Impact on Design:</strong>
+                            <ul class="mt-2 space-y-1 text-[#334E68]">
+                                <li>• Aggressive caching strategies</li>
+                                <li>• Read replicas for database scaling</li>
+                                <li>• CDNs for global content delivery</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card bg-white rounded-xl shadow-lg p-8 flex flex-col items-center">
+                        <h3 class="text-2xl font-semibold text-[#102A43] mb-6 text-center">SQL vs. NoSQL Databases</h3>
+                        <div class="chart-container mb-6">
+                            <canvas id="sqlVsNoSqlChart"></canvas>
+                        </div>
+                        <p class="text-center text-base text-[#334E68] mb-4 leading-relaxed">Database choice depends on your data structure, consistency needs, and scale requirements. Neither is universally better—context matters.</p>
+                        <div class="w-full grid grid-cols-2 gap-4 text-sm">
+                            <div class="bg-blue-50 rounded p-3">
+                                <strong class="text-[#3366CC]">SQL Best For:</strong>
+                                <ul class="mt-1 text-[#334E68] text-xs space-y-0.5">
+                                    <li>• Complex queries</li>
+                                    <li>• ACID compliance</li>
+                                    <li>• Financial systems</li>
+                                </ul>
+                            </div>
+                            <div class="bg-red-50 rounded p-3">
+                                <strong class="text-[#DC3912]">NoSQL Best For:</strong>
+                                <ul class="mt-1 text-[#334E68] text-xs space-y-0.5">
+                                    <li>• Horizontal scaling</li>
+                                    <li>• Flexible schemas</li>
+                                    <li>• Big data analytics</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Core Concepts -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="card bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="text-4xl mb-4">🚀</div>
+                        <h3 class="text-xl font-semibold text-[#102A43] mb-3">Horizontal vs. Vertical Scaling</h3>
+                        <p class="text-sm text-[#334E68] mb-4">Scale up (bigger machines) vs. Scale out (more machines)</p>
+                        <div class="text-left text-xs text-[#334E68]">
+                            <div class="mb-2"><strong>Vertical:</strong> Easier, limited ceiling</div>
+                            <div><strong>Horizontal:</strong> Complex, unlimited potential</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="text-4xl mb-4">🔄</div>
+                        <h3 class="text-xl font-semibold text-[#102A43] mb-3">CAP Theorem</h3>
+                        <p class="text-sm text-[#334E68] mb-4">Choose 2 of 3: Consistency, Availability, Partition tolerance</p>
+                        <div class="text-left text-xs text-[#334E68]">
+                            <div class="mb-2"><strong>CP:</strong> Banking systems</div>
+                            <div><strong>AP:</strong> Social media feeds</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="text-4xl mb-4">⚖️</div>
+                        <h3 class="text-xl font-semibold text-[#102A43] mb-3">Eventual Consistency</h3>
+                        <p class="text-sm text-[#334E68] mb-4">Data will be consistent eventually, not immediately</p>
+                        <div class="text-left text-xs text-[#334E68]">
+                            <div class="mb-2"><strong>Good for:</strong> Social feeds, likes</div>
+                            <div><strong>Bad for:</strong> Financial transactions</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Architecture Patterns Section -->
+            <section id="patterns" class="card bg-white rounded-xl shadow-lg p-6 md:p-10 mb-12" aria-labelledby="architecture-patterns">
+                <h2 id="architecture-patterns" class="text-3xl font-bold text-[#102A43] mb-8 text-center">Essential Architecture Patterns</h2>
+                
+                <!-- Load Balancing & Caching -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold text-[#102A43] mb-6 text-center">Load Balancing & Caching Strategy</h3>
+                    <p class="max-w-4xl mx-auto text-center text-base text-[#334E68] mb-10 leading-relaxed">Modern systems achieve performance and reliability through intelligent request distribution and strategic data caching. This architecture can reduce response times by 200x and handle millions of concurrent users.</p>
+                    
+                    <div class="w-full overflow-x-auto p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                        <div class="flex flex-col items-center min-w-[700px]">
+                            <div class="text-lg font-semibold mb-3 text-[#102A43]">🌐 User Request Journey</div>
+                            <div class="flow-arrow mb-2">⬇️</div>
+                            
+                            <div class="flow-box rounded-xl p-6 font-semibold shadow-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                                Load Balancer
+                                <div class="text-xs font-normal mt-1 opacity-90">Nginx, HAProxy, AWS ALB</div>
+                            </div>
+                            
+                            <div class="flow-arrow mt-3 mb-3">⬇️</div>
+                            <div class="text-sm text-[#334E68] mb-3 font-medium">Round Robin | Least Connections | Geographic</div>
+                            
+                            <div class="w-full flex justify-around my-4">
+                                <div class="flow-arrow -rotate-45 text-3xl">↙️</div>
+                                <div class="flow-arrow text-3xl">⬇️</div>
+                                <div class="flow-arrow rotate-45 text-3xl">↘️</div>
+                            </div>
+                            
+                            <div class="w-full flex justify-around mb-6">
+                                <div class="flow-box rounded-xl p-4 text-center shadow-lg bg-green-50 border-green-400">
+                                    <div class="font-semibold">Web Server 1</div>
+                                    <div class="text-xs mt-1 text-green-600">CPU: 45%</div>
+                                </div>
+                                <div class="flow-box rounded-xl p-4 text-center shadow-lg bg-green-50 border-green-400">
+                                    <div class="font-semibold">Web Server 2</div>
+                                    <div class="text-xs mt-1 text-green-600">CPU: 32%</div>
+                                </div>
+                                <div class="flow-box rounded-xl p-4 text-center shadow-lg bg-green-50 border-green-400">
+                                    <div class="font-semibold">Web Server 3</div>
+                                    <div class="text-xs mt-1 text-green-600">CPU: 28%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flow-arrow mb-4">⬇️</div>
+                            
+                            <div class="flex items-center w-full justify-center space-x-6">
+                                <div class="flow-box rounded-xl p-6 font-semibold bg-gradient-to-r from-orange-400 to-orange-500 text-white text-center shadow-lg">
+                                    <div class="text-lg">🚀 Cache Layer</div>
+                                    <div class="text-sm font-normal mt-2">Redis, Memcached</div>
+                                    <div class="text-xs font-normal mt-1 opacity-90">Hit Rate: 95%</div>
+                                    <div class="text-xs font-normal opacity-90">Latency: ~1ms</div>
+                                </div>
+                                
+                                <div class="flex flex-col items-center">
+                                    <div class="text-[#334E68] font-bold text-lg mb-2">Cache Miss?</div>
+                                    <div class="flow-arrow text-2xl">➡️</div>
+                                </div>
+                                
+                                <div class="flow-box rounded-xl p-6 font-semibold text-center shadow-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                                    <div class="text-lg">💾 Database</div>
+                                    <div class="text-sm font-normal mt-2">PostgreSQL, MySQL</div>
+                                    <div class="text-xs font-normal mt-1 opacity-90">Latency: ~200ms</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Microservices Pattern -->
+                <div class="section-divider"></div>
+                
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold text-[#102A43] mb-6 text-center">Microservices Architecture</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold text-[#102A43] mb-4">🏗️ Benefits</h4>
+                            <ul class="space-y-3 text-sm text-[#334E68]">
+                                <li class="flex items-start">
+                                    <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                                    <span><strong>Independent Deployment:</strong> Teams can ship features without coordination</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                                    <span><strong>Technology Diversity:</strong> Use the right tool for each service</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                                    <span><strong>Fault Isolation:</strong> One service failure doesn't crash everything</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-[#109618] mr-2 mt-0.5">✓</span>
+                                    <span><strong>Scalability:</strong> Scale individual components based on demand</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-[#102A43] mb-4">⚠️ Challenges</h4>
+                            <ul class="space-y-3 text-sm text-[#334E68]">
+                                <li class="flex items-start">
+                                    <span class="text-[#DC3912] mr-2 mt-0.5">×</span>
+                                    <span><strong>Distributed Complexity:</strong> Network calls, latency, partial failures</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-[#DC3912] mr-2 mt-0.5">×</span>
+                                    <span><strong>Data Consistency:</strong> Managing transactions across services</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-[#DC3912] mr-2 mt-0.5">×</span>
+                                    <span><strong>Operational Overhead:</strong> More services to monitor and deploy</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-[#DC3912] mr-2 mt-0.5">×</span>
+                                    <span><strong>Testing Complexity:</strong> Integration testing becomes challenging</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-[#102A43] mb-3">🎯 When to Use Microservices</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                            <div>
+                                <h5 class="font-semibold text-[#109618] mb-2">✅ Good Candidates</h5>
+                                <ul class="text-[#334E68] space-y-1">
+                                    <li>• Large, mature applications</li>
+                                    <li>• Multiple independent teams</li>
+                                    <li>• Clear service boundaries</li>
+                                    <li>• High availability requirements</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-[#DC3912] mb-2">❌ Poor Candidates</h5>
+                                <ul class="text-[#334E68] space-y-1">
+                                    <li>• Simple applications</li>
+                                    <li>• Small development teams</li>
+                                    <li>• Tightly coupled features</li>
+                                    <li>• Limited operational expertise</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Interview Process Section -->
+            <section id="process" class="card bg-white rounded-xl shadow-lg p-6 md:p-10 mb-12" aria-labelledby="interview-process">
+                <h2 id="interview-process" class="text-3xl font-bold text-[#102A43] mb-10 text-center">The 5-Step Interview Process</h2>
+                
+                <div class="relative max-w-4xl mx-auto">
+                    <div class="absolute left-1/2 -translate-x-1/2 top-0 h-full w-1 bg-gradient-to-b from-[#3366CC] to-[#A7BFDB] rounded-full"></div>
+                    
+                    <div class="relative mb-12">
+                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 w-12 h-12 rounded-full bg-gradient-to-r from-[#3366CC] to-[#4A90E2] border-4 border-white flex items-center justify-center text-white font-bold text-lg shadow-lg z-10">1</div>
+                        <div class="md:ml-[60%] p-6 rounded-xl shadow-lg bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-[#3366CC]">
+                            <h3 class="text-xl font-bold text-[#102A43] mb-3 flex items-center">
+                                <span class="text-2xl mr-2">🎯</span> Define Scope & Ask Questions
+                            </h3>
+                            <p class="text-base text-[#334E68] mb-4 leading-relaxed">Start with clarifying questions. Never assume—understanding requirements is 50% of the solution.</p>
+                            <div class="bg-white rounded p-3 text-sm">
+                                <strong class="text-[#102A43]">Key Questions:</strong>
+                                <ul class="mt-1 text-[#334E68] space-y-0.5">
+                                    <li>• How many users? (DAU/MAU)</li>
+                                    <li>• Read/write ratio?</li>
+                                    <li>• Latency requirements?</li>
+                                    <li>• Data consistency needs?</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative mb-12">
+                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 w-12 h-12 rounded-full bg-gradient-to-r from-[#FF9900] to-[#FFB84D] border-4 border-white flex items-center justify-center text-white font-bold text-lg shadow-lg z-10">2</div>
+                        <div class="md:mr-[60%] p-6 rounded-xl shadow-lg bg-gradient-to-r from-orange-50 to-orange-100 text-right border-r-4 border-[#FF9900]">
+                            <h3 class="text-xl font-bold text-[#102A43] mb-3 flex items-center justify-end">
+                                <span class="text-2xl ml-2">📊</span> Estimate Scale
+                            </h3>
+                            <p class="text-base text-[#334E68] mb-4 leading-relaxed">Back-of-envelope calculations guide architectural decisions. Show your math!</p>
+                            <div class="bg-white rounded p-3 text-sm text-left">
+                                <strong class="text-[#102A43]">Calculate:</strong>
+                                <ul class="mt-1 text-[#334E68] space-y-0.5">
+                                    <li>• QPS (Queries Per Second)</li>
+                                    <li>• Storage requirements</li>
+                                    <li>• Bandwidth needs</li>
+                                    <li>• Memory for caching</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative mb-12">
+                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 w-12 h-12 rounded-full bg-gradient-to-r from-[#109618] to-[#4CAF50] border-4 border-white flex items-center justify-center text-white font-bold text-lg shadow-lg z-10">3</div>
+                        <div class="md:ml-[60%] p-6 rounded-xl shadow-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-[#109618]">
+                            <h3 class="text-xl font-bold text-[#102A43] mb-3 flex items-center">
+                                <span class="text-2xl mr-2">🗃️</span> Define the Data Model
+                            </h3>
+                            <p class="text-base text-[#334E68] mb-4 leading-relaxed">Design your data schema. Think about relationships, access patterns, and consistency.</p>
+                            <div class="bg-white rounded p-3 text-sm">
+                                <strong class="text-[#102A43]">Consider:</strong>
+                                <ul class="mt-1 text-[#334E68] space-y-0.5">
+                                    <li>• Entity relationships</li>
+                                    <li>• Query patterns</li>
+                                    <li>• Data types and constraints</li>
+                                    <li>• Indexing strategy</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative mb-12">
+                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 w-12 h-12 rounded-full bg-gradient-to-r from-[#DC3912] to-[#F44336] border-4 border-white flex items-center justify-center text-white font-bold text-lg shadow-lg z-10">4</div>
+                        <div class="md:mr-[60%] p-6 rounded-xl shadow-lg bg-gradient-to-r from-red-50 to-red-100 text-right border-r-4 border-[#DC3912]">
+                            <h3 class="text-xl font-bold text-[#102A43] mb-3 flex items-center justify-end">
+                                <span class="text-2xl ml-2">🏗️</span> Sketch High-Level Design
+                            </h3>
+                            <p class="text-base text-[#334E68] mb-4 leading-relaxed">Draw the big picture first, then drill down. Keep it simple initially.</p>
+                            <div class="bg-white rounded p-3 text-sm text-left">
+                                <strong class="text-[#102A43]">Include:</strong>
+                                <ul class="mt-1 text-[#334E68] space-y-0.5">
+                                    <li>• Load balancers</li>
+                                    <li>• Web servers</li>
+                                    <li>• Databases</li>
+                                    <li>• Caches</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 w-12 h-12 rounded-full bg-gradient-to-r from-[#990099] to-[#E91E63] border-4 border-white flex items-center justify-center text-white font-bold text-lg shadow-lg z-10">5</div>
+                        <div class="md:ml-[60%] p-6 rounded-xl shadow-lg bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-[#990099]">
+                            <h3 class="text-xl font-bold text-[#102A43] mb-3 flex items-center">
+                                <span class="text-2xl mr-2">🔍</span> Identify & Resolve Bottlenecks
+                            </h3>
+                            <p class="text-base text-[#334E68] mb-4 leading-relaxed">Find weak points and propose solutions. Show how you'd monitor and scale each component.</p>
+                            <div class="bg-white rounded p-3 text-sm">
+                                <strong class="text-[#102A43]">Address:</strong>
+                                <ul class="mt-1 text-[#334E68] space-y-0.5">
+                                    <li>• Single points of failure</li>
+                                    <li>• Performance bottlenecks</li>
+                                    <li>• Scalability limitations</li>
+                                    <li>• Monitoring & alerting</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-12 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-8">
+                    <h3 class="text-2xl font-semibold text-[#102A43] mb-6 text-center">⏱️ Time Management Tips</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 text-center text-sm">
+                        <div class="bg-white rounded-lg p-4 shadow">
+                            <div class="font-bold text-[#3366CC] text-lg">5-10min</div>
+                            <div class="text-[#334E68]">Requirements</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow">
+                            <div class="font-bold text-[#FF9900] text-lg">5-10min</div>
+                            <div class="text-[#334E68]">Estimation</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow">
+                            <div class="font-bold text-[#109618] text-lg">10-15min</div>
+                            <div class="text-[#334E68]">Data Model</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow">
+                            <div class="font-bold text-[#DC3912] text-lg">15-20min</div>
+                            <div class="text-[#334E68]">Architecture</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow">
+                            <div class="font-bold text-[#990099] text-lg">10-15min</div>
+                            <div class="text-[#334E68]">Scale & Monitor</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Real-World Examples Section -->
+            <section id="examples" class="mb-12" aria-labelledby="real-examples">
+                <h2 id="real-examples" class="text-3xl font-bold text-[#102A43] mb-10 text-center">Real-World Design Examples</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Chat System -->
+                    <div class="card bg-white rounded-xl shadow-lg p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="text-4xl mr-4">💬</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-[#102A43]">Real-time Chat System</h3>
+                                <p class="text-[#334E68]">WhatsApp, Discord, Slack</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">🔧 Key Components</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• WebSocket connections for real-time messaging</li>
+                                    <li>• Message queue (Apache Kafka) for reliability</li>
+                                    <li>• Redis for online user presence</li>
+                                    <li>• CDN for media file distribution</li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">📈 Scale Considerations</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• Connection pooling for WebSocket management</li>
+                                    <li>• Message sharding by chat room or user ID</li>
+                                    <li>• Push notifications for offline users</li>
+                                    <li>• Geographic distribution of connection servers</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-blue-50 rounded-lg p-3">
+                                <strong class="text-[#3366CC] text-sm">💡 Design Insight:</strong>
+                                <p class="text-xs text-[#334E68] mt-1">The challenge isn't just sending messages—it's maintaining millions of persistent connections and ensuring message delivery even when users are offline.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- URL Shortener -->
+                    <div class="card bg-white rounded-xl shadow-lg p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="text-4xl mr-4">🔗</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-[#102A43]">URL Shortener</h3>
+                                <p class="text-[#334E68]">bit.ly, tinyurl, t.co</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">🔧 Key Components</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• Base62 encoding for short URL generation</li>
+                                    <li>• Redis cache for popular URL mappings</li>
+                                    <li>• Analytics service for click tracking</li>
+                                    <li>• Rate limiting to prevent abuse</li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">📈 Scale Considerations</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• Database sharding by URL hash</li>
+                                    <li>• Bloom filters for existence checks</li>
+                                    <li>• Geographically distributed redirects</li>
+                                    <li>• Async analytics to avoid redirect delays</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-orange-50 rounded-lg p-3">
+                                <strong class="text-[#FF9900] text-sm">💡 Design Insight:</strong>
+                                <p class="text-xs text-[#334E68] mt-1">URL shorteners are deceptively complex—they need to handle massive read traffic, generate unique IDs at scale, and provide real-time analytics.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Social Media Feed -->
+                    <div class="card bg-white rounded-xl shadow-lg p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="text-4xl mr-4">📱</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-[#102A43]">Social Media Feed</h3>
+                                <p class="text-[#334E68]">Twitter, Instagram, Facebook</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">🔧 Key Components</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• Fan-out service for timeline generation</li>
+                                    <li>• Redis for timeline caching</li>
+                                    <li>• Media processing pipeline</li>
+                                    <li>• Recommendation engine integration</li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">📈 Scale Considerations</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• Push vs pull model for different user tiers</li>
+                                    <li>• Hybrid approach for celebrity users</li>
+                                    <li>• Timeline ranking algorithms</li>
+                                    <li>• Content delivery optimization</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-green-50 rounded-lg p-3">
+                                <strong class="text-[#109618] text-sm">💡 Design Insight:</strong>
+                                <p class="text-xs text-[#334E68] mt-1">The key challenge is balancing freshness with performance—pre-computing timelines for quick access while handling the complexity of users with millions of followers.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Streaming -->
+                    <div class="card bg-white rounded-xl shadow-lg p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="text-4xl mr-4">🎥</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-[#102A43]">Video Streaming</h3>
+                                <p class="text-[#334E68]">YouTube, Netflix, TikTok</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">🔧 Key Components</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• Video transcoding pipeline</li>
+                                    <li>• Global CDN for content delivery</li>
+                                    <li>• Adaptive bitrate streaming</li>
+                                    <li>• Metadata database and search</li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-[#102A43] mb-2">📈 Scale Considerations</h4>
+                                <ul class="text-sm text-[#334E68] space-y-1">
+                                    <li>• Massive storage requirements (petabytes)</li>
+                                    <li>• Bandwidth optimization strategies</li>
+                                    <li>• Geographically distributed encoding</li>
+                                    <li>• Real-time analytics and recommendations</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-purple-50 rounded-lg p-3">
+                                <strong class="text-[#990099] text-sm">💡 Design Insight:</strong>
+                                <p class="text-xs text-[#334E68] mt-1">Video streaming requires massive infrastructure investment—the challenge is efficiently encoding, storing, and delivering hours of video uploaded every minute to billions of users globally.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Capacity Calculator Section -->
+        <section id="calculator" class="mb-12" aria-labelledby="capacity-calculator">
+            <div class="card bg-white rounded-xl shadow-lg p-6 md:p-10">
+                <h2 id="capacity-calculator" class="text-3xl font-bold text-primary-custom mb-8 text-center">Interactive Capacity Calculator</h2>
+                <p class="text-center text-secondary-custom mb-8 max-w-3xl mx-auto">Plan your system's capacity requirements with real-time calculations for storage, bandwidth, and compute resources.</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="calc-input-group">
+                            <label class="calc-label" for="daily-users">Daily Active Users (DAU)</label>
+                            <input type="number" id="daily-users" class="calc-input" value="1000000" min="1">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label class="calc-label" for="avg-requests">Avg Requests per User per Day</label>
+                            <input type="number" id="avg-requests" class="calc-input" value="100" min="1">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label class="calc-label" for="peak-multiplier">Peak Traffic Multiplier</label>
+                            <input type="number" id="peak-multiplier" class="calc-input" value="3" min="1" step="0.1">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label class="calc-label" for="avg-response-size">Average Response Size (KB)</label>
+                            <input type="number" id="avg-response-size" class="calc-input" value="10" min="0.1" step="0.1">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label class="calc-label" for="data-retention">Data Retention (Years)</label>
+                            <input type="number" id="data-retention" class="calc-input" value="2" min="0.1" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="calc-result" id="qps-result">
+                            <div class="text-lg font-bold">Peak QPS: <span id="peak-qps">3,472</span></div>
+                            <div class="text-sm opacity-90">Average QPS: <span id="avg-qps">1,157</span></div>
+                        </div>
+                        
+                        <div class="calc-result" id="bandwidth-result">
+                            <div class="text-lg font-bold">Peak Bandwidth: <span id="peak-bandwidth">34.7 MB/s</span></div>
+                            <div class="text-sm opacity-90">Average: <span id="avg-bandwidth">11.6 MB/s</span></div>
+                        </div>
+                        
+                        <div class="calc-result" id="storage-result">
+                            <div class="text-lg font-bold">Storage Needed: <span id="total-storage">730 GB</span></div>
+                            <div class="text-sm opacity-90">Per Year: <span id="yearly-storage">365 GB</span></div>
+                        </div>
+                        
+                        <div class="calc-breakdown" id="breakdown">
+                            <h4 class="font-semibold text-primary-custom mb-2">💡 Recommendations</h4>
+                            <div id="recommendations">
+                                <div>• Consider <strong>load balancing</strong> for high QPS</div>
+                                <div>• Implement <strong>caching</strong> to reduce database load</div>
+                                <div>• Use <strong>CDN</strong> for bandwidth optimization</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-custom rounded-lg p-4">
+                            <h4 class="font-semibold text-primary-custom mb-2">📊 Architecture Suggestions</h4>
+                            <div id="architecture-suggestions" class="text-sm text-secondary-custom space-y-1">
+                                <div>• Database: Consider sharding for scale</div>
+                                <div>• Cache: Redis cluster recommended</div>
+                                <div>• Servers: 5-10 application servers</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="gradient-bg rounded-xl p-8 text-center text-white mt-16">
+            <div class="mb-6">
+                <h3 class="text-2xl font-bold mb-4">Ready to Master System Design?</h3>
+                <p class="text-lg opacity-90 mb-6">This guide covers the fundamentals, but real expertise comes from practice and building systems.</p>
+                <div class="flex flex-wrap justify-center gap-4 text-sm">
+                    <div class="bg-white/20 rounded-lg px-4 py-2">
+                        <span class="font-medium">📚 Keep Learning</span>
+                    </div>
+                    <div class="bg-white/20 rounded-lg px-4 py-2">
+                        <span class="font-medium">🛠️ Build Projects</span>
+                    </div>
+                    <div class="bg-white/20 rounded-lg px-4 py-2">
+                        <span class="font-medium">💪 Practice Interviews</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-divider bg-white/20"></div>
+            <div class="mt-6 text-sm opacity-75">
+                <p>This guide provides practical insights into system design concepts and interview preparation.</p>
+                <p class="mt-2">© 2025 System Design Guide | Built for Codesmith Residents</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        // Close mobile menu if open
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+            
+            // Chart utilities
+            const wrapLabel = (label) => {
+                if (label.length <= 16) return label;
+                const words = label.split(' ');
+                const lines = [];
+                let currentLine = '';
+                for (const word of words) {
+                    if ((currentLine + ' ' + word).length > 16) {
+                        lines.push(currentLine.trim());
+                        currentLine = word;
+                    } else {
+                        currentLine += (currentLine ? ' ' : '') + word;
+                    }
+                }
+                if (currentLine) lines.push(currentLine.trim());
+                return lines;
+            };
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) {
+                    return label.join(' ');
+                } else {
+                    return label;
+                }
+            };
+            
+            const chartColors = ['#3366CC', '#DC3912', '#FF9900', '#109618', '#990099', '#3B3EAC'];
+            
+            // Enhanced Read/Write Chart
+            const readWriteCtx = document.getElementById('readWriteChart').getContext('2d');
+            new Chart(readWriteCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Read Operations (99%)', 'Write Operations (1%)'],
+                    datasets: [{
+                        label: 'System Operations Distribution',
+                        data: [99, 1],
+                        backgroundColor: [
+                            'rgba(51, 102, 204, 0.8)',
+                            'rgba(255, 153, 0, 0.8)'
+                        ],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 3,
+                        hoverBackgroundColor: [
+                            'rgba(51, 102, 204, 0.9)',
+                            'rgba(255, 153, 0, 0.9)'
+                        ],
+                        hoverBorderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: tooltipTitleCallback,
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    return label + ': ' + value + '%';
+                                }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#3366CC',
+                            borderWidth: 1
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        duration: 2000
+                    }
+                }
+            });
+
+            // Enhanced SQL vs NoSQL Chart
+            const sqlVsNoSqlCtx = document.getElementById('sqlVsNoSqlChart').getContext('2d');
+            new Chart(sqlVsNoSqlCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Horizontal Scalability', 'Schema Flexibility', 'Query Complexity', 'ACID Compliance', 'Performance'],
+                    datasets: [
+                        {
+                            label: 'SQL Databases',
+                            data: [6, 4, 9, 9, 7],
+                            backgroundColor: 'rgba(51, 102, 204, 0.7)',
+                            borderColor: '#3366CC',
+                            borderWidth: 2,
+                            borderRadius: 4,
+                            hoverBackgroundColor: 'rgba(51, 102, 204, 0.8)'
+                        },
+                        {
+                            label: 'NoSQL Databases',
+                            data: [9, 9, 5, 6, 8],
+                            backgroundColor: 'rgba(220, 57, 18, 0.7)',
+                            borderColor: '#DC3912',
+                            borderWidth: 2,
+                            borderRadius: 4,
+                            hoverBackgroundColor: 'rgba(220, 57, 18, 0.8)'
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Capability Score (1-10)',
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Database Characteristics',
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: tooltipTitleCallback,
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.x + '/10';
+                                }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff'
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+            
+            // Intersection Observer for animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe all card elements for animation
+            document.querySelectorAll('.card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+            
+            // Capacity Calculator Logic
+            const calculatorInputs = {
+                dailyUsers: document.getElementById('daily-users'),
+                avgRequests: document.getElementById('avg-requests'),
+                peakMultiplier: document.getElementById('peak-multiplier'),
+                avgResponseSize: document.getElementById('avg-response-size'),
+                dataRetention: document.getElementById('data-retention')
+            };
+            
+            const calculatorOutputs = {
+                peakQps: document.getElementById('peak-qps'),
+                avgQps: document.getElementById('avg-qps'),
+                peakBandwidth: document.getElementById('peak-bandwidth'),
+                avgBandwidth: document.getElementById('avg-bandwidth'),
+                totalStorage: document.getElementById('total-storage'),
+                yearlyStorage: document.getElementById('yearly-storage'),
+                recommendations: document.getElementById('recommendations'),
+                architectureSuggestions: document.getElementById('architecture-suggestions')
+            };
+            
+            function formatNumber(num) {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                } else if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                }
+                return Math.round(num).toLocaleString();
+            }
+            
+            function formatBytes(bytes) {
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                if (bytes === 0) return '0 Bytes';
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+            }
+            
+            function calculateCapacity() {
+                const dailyUsers = parseInt(calculatorInputs.dailyUsers.value) || 0;
+                const avgRequests = parseInt(calculatorInputs.avgRequests.value) || 0;
+                const peakMultiplier = parseFloat(calculatorInputs.peakMultiplier.value) || 1;
+                const avgResponseSize = parseFloat(calculatorInputs.avgResponseSize.value) || 0;
+                const dataRetention = parseFloat(calculatorInputs.dataRetention.value) || 1;
+                
+                // Calculate QPS
+                const avgQps = (dailyUsers * avgRequests) / (24 * 60 * 60);
+                const peakQps = avgQps * peakMultiplier;
+                
+                // Calculate Bandwidth (assuming read-heavy, 80% cache hit rate)
+                const avgBandwidth = avgQps * avgResponseSize * 1024 * 0.2; // bytes per second
+                const peakBandwidth = peakQps * avgResponseSize * 1024 * 0.2;
+                
+                // Calculate Storage (daily data * retention period)
+                const dailyData = dailyUsers * avgRequests * avgResponseSize * 1024; // bytes per day
+                const yearlyStorage = dailyData * 365; // bytes per year
+                const totalStorage = yearlyStorage * dataRetention;
+                
+                // Update displays
+                calculatorOutputs.avgQps.textContent = formatNumber(avgQps);
+                calculatorOutputs.peakQps.textContent = formatNumber(peakQps);
+                calculatorOutputs.avgBandwidth.textContent = formatBytes(avgBandwidth) + '/s';
+                calculatorOutputs.peakBandwidth.textContent = formatBytes(peakBandwidth) + '/s';
+                calculatorOutputs.yearlyStorage.textContent = formatBytes(yearlyStorage);
+                calculatorOutputs.totalStorage.textContent = formatBytes(totalStorage);
+                
+                // Generate recommendations
+                const recommendations = [];
+                if (peakQps > 1000) recommendations.push('• Consider <strong>horizontal scaling</strong> with load balancers');
+                if (peakQps > 5000) recommendations.push('• Implement <strong>caching layer</strong> (Redis/Memcached)');
+                if (peakBandwidth > 100 * 1024 * 1024) recommendations.push('• Use <strong>CDN</strong> for static content delivery');
+                if (totalStorage > 1024 * 1024 * 1024 * 1024) recommendations.push('• Consider <strong>data archiving</strong> strategy');
+                if (avgQps > 500) recommendations.push('• Implement <strong>database read replicas</strong>');
+                
+                calculatorOutputs.recommendations.innerHTML = recommendations.length > 0 ? 
+                    recommendations.join('<br>') : '• Your current scale looks manageable!';
+                
+                // Generate architecture suggestions
+                const suggestions = [];
+                const serverCount = Math.max(2, Math.ceil(peakQps / 500));
+                suggestions.push(`• Servers: ${serverCount}+ application servers recommended`);
+                
+                if (totalStorage > 100 * 1024 * 1024 * 1024) {
+                    suggestions.push('• Database: Consider sharding for scale');
+                } else {
+                    suggestions.push('• Database: Single master with read replicas');
+                }
+                
+                if (peakQps > 1000) {
+                    suggestions.push('• Cache: Redis cluster for high availability');
+                } else {
+                    suggestions.push('• Cache: Single Redis instance sufficient');
+                }
+                
+                if (peakBandwidth > 50 * 1024 * 1024) {
+                    suggestions.push('• CDN: Global distribution recommended');
+                }
+                
+                calculatorOutputs.architectureSuggestions.innerHTML = suggestions.join('<br>');
+            }
+            
+            // Add event listeners to calculator inputs for real-time updates
+            Object.values(calculatorInputs).forEach(input => {
+                if (input) {
+                    input.addEventListener('input', calculateCapacity);
+                    input.addEventListener('change', calculateCapacity);
+                }
+            });
+            
+            // Initial calculation on page load
+            calculateCapacity();
+            
+            // Add loading states to charts
+            setTimeout(() => {
+                document.querySelectorAll('canvas').forEach(canvas => {
+                    canvas.style.opacity = '1';
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>
